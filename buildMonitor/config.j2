@@ -1,0 +1,9 @@
+config = {
+    hostname: '{{ gocd_server_name }}',
+    port: '{{ gocd_server_port }}',
+    auth: '{{ gocd_server_auth }}', //user:password
+    ssl: false, //use SSL (for HTTPS connections)
+    limitTo: [] //if empty all the jobs will be visualised (meaning everything with PIPELINE :: STAGE :: JOB name)
+  };
+
+exports.getConfig = function(){return config;};

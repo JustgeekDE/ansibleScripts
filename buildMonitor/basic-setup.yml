@@ -1,0 +1,74 @@
+- hosts: generic
+  remote_user: pi
+  vars:
+    nodeVersion: v4.4.7
+    nodeArchive: node-{{nodeVersion}}-linux-armv6l
+    burstahUrl: git://github.com/lplotni/burstah.git
+    gocd_server_name:  "{{ GOCD_SERVER_NAME |default('localhost') }}"
+    gocd_server_port:  "{{ GOCD_SERVER_PORT |default(8153) }}"
+    gocd_server_auth:  "{{ GOCD_SERVER_AUTH |default('') }}"
+  tasks:
+
+  - name: Update apt
+    become: yes
+    apt: update_cache=yes
+
+  - name: Update packages
+    become: yes
+    apt: upgrade=yes
+
+  - name: remove unnecessary stuff
+    become: yes
+    apt: name={{ item }} state=absent purge=yes
+    with_items:
+      - wolfram-engine
+
+  - name: install tools
+    become: yes
+    apt: name={{ item }} state=latest
+    with_items:
+      - git-core
+      - vim
+      - apt-transport-https
+      - daemon
+      - build-essential
+      - luakit  
+
+  - name: get node tarball
+    become: yes
+    unarchive: src="https://nodejs.org/dist/{{nodeVersion}}/{{nodeArchive}}.tar.xz" dest="/usr/local/" copy=no creates="/usr/local/bin/node"
+
+  - name: link node
+    become: yes
+    file: src=/usr/local/{{nodeArchive}}/bin/node dest=/usr/local/bin/node state=link
+
+  - name: link npm
+    become: yes
+    file: src=/usr/local/{{nodeArchive}}/bin/npm dest=/usr/local/bin/npm state=link
+
+  - name: clone burstah repo
+    git: repo={{burstahUrl}} dest=/home/pi/burstah
+
+  - name: configure burstah
+    template: src=config.j2 dest=/home/pi/burstah/config.js owner=pi backup=yes
+
+  - name: install node modules
+    command: npm install chdir=/home/pi/burstah
+
+  - name: install node processs manager
+    become: yes
+    command: npm install pm2 -g chdir=/home/pi/burstah
+
+  - name: link pm2
+    become: yes
+    file: src=/usr/local/{{nodeArchive}}/bin/pm2 dest=/usr/local/bin/pm2 state=link
+
+  - name: add backend to node processs manager
+    command: pm2 start ./bin/www chdir=/home/pi/burstah
+
+  - name: add pm2 as a system server
+    become: yes
+    command: pm2 startup systemd -u pi
+
+  - name: add luakit to startup
+    lineinfile: dest=/home/pi/.config/lxsession/LXDE-pi/autostart backup=yes line="@luakit http://localhost:3000"
