@@ -72,3 +72,13 @@
 
   - name: add luakit to startup
     lineinfile: dest=/home/pi/.config/lxsession/LXDE-pi/autostart backup=yes line="@luakit http://localhost:3000"
+
+  - name: disable screen saver
+    lineinfile:
+      dest: dest=/home/pi/.config/lxsession/LXDE-p
+      backup: no
+      line: "{{ item }}"
+    with_items:
+      - { '@xset s off' }
+      - { '@xset -dpms' }
+      - { '@xset s noblank' }
