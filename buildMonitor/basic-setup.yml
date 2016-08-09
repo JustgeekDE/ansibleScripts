@@ -32,7 +32,8 @@
       - apt-transport-https
       - daemon
       - build-essential
-      - luakit  
+      - luakit
+      - iceweasel
 
   - name: get node tarball
     become: yes
@@ -47,7 +48,7 @@
     file: src=/usr/local/{{nodeArchive}}/bin/npm dest=/usr/local/bin/npm state=link
 
   - name: clone burstah repo
-    git: repo={{burstahUrl}} dest=/home/pi/burstah
+    git: force=yes repo={{burstahUrl}} dest=/home/pi/burstah
 
   - name: configure burstah
     template: src=config.j2 dest=/home/pi/burstah/config.js owner=pi backup=yes
@@ -74,11 +75,9 @@
     lineinfile: dest=/home/pi/.config/lxsession/LXDE-pi/autostart backup=yes line="@luakit http://localhost:3000"
 
   - name: disable screen saver
-    lineinfile:
-      dest: dest=/home/pi/.config/lxsession/LXDE-p
-      backup: no
-      line: "{{ item }}"
-    with_items:
-      - { '@xset s off' }
-      - { '@xset -dpms' }
-      - { '@xset s noblank' }
+    blockinfile:
+      dest: /home/pi/.config/lxsession/LXDE-pi/autostart
+      block: |
+        @xset s off
+        @xset -dpms
+        @xset s noblank
