@@ -1,0 +1,67 @@
+- hosts: generic
+  remote_user: pi
+  vars:
+    nodeVersion: v4.4.7
+    nodeArchive: node-{{nodeVersion}}-linux-armv6l
+    burstahUrl: git://github.com/lplotni/burstah.git
+    gocd_server_name:  "{{ GOCD_SERVER_NAME |default('localhost') }}"
+    gocd_server_port:  "{{ GOCD_SERVER_PORT |default(8153) }}"
+    gocd_server_auth:  "{{ GOCD_SERVER_AUTH |default('') }}"
+  tasks:
+
+  - name: Update apt
+    become: yes
+    apt: update_cache=yes
+
+  - name: Update packages
+    become: yes
+    apt: upgrade=yes
+
+  - name: remove unnecessary stuff
+    become: yes
+    apt: name={{ item }} state=absent purge=yes
+    with_items:
+      - wolfram-engine
+
+  - name: install tools
+    become: yes
+    apt: name={{ item }} state=latest
+    with_items:
+      - git-core
+      - vim
+      - apt-transport-https
+      - daemon
+      - build-essential
+      - python3
+      - python3-pip
+      - gnustep-gui-runtime
+      - mpv
+
+  - name: install pexpect module
+    become: yes
+    pip:
+      name: pexpect
+      version: 3.3+
+
+  - name: get phat DAC installer
+    become: no
+    get_url:
+      url: http://get.pimoroni.com/phatdac
+      dest: "/tmp/phatdac"
+      checksum: sha256:3171289de7d3a530c8e0ce4a8338a13679b1dd24ead03c1cc624f68ddd086002
+      mode: "u+rwx"
+
+  - name: execute phat dac install
+    become: no
+    expect:
+      command: /tmp/phatdac
+      responses:
+        (?i)continue: "y"
+        (?i)reboot: "n"
+        (?i)test: "y"
+
+  - name: install youtube client for testing
+    become: yes
+    pip:
+      executable: pip3
+      name: mps-youtube
