@@ -1,0 +1,73 @@
+- hosts: all
+  remote_user: pi
+  tasks:
+
+  - name: Update apt
+    become: yes
+    apt: update_cache=yes
+
+  - name: Update packages
+    become: yes
+    apt: upgrade=yes
+
+  - name: remove unnecessary stuff
+    become: yes
+    apt: name={{ item }} state=absent purge=yes
+    with_items:
+      - wolfram-engine
+
+  - name: install tools
+    become: yes
+    apt: name={{ item }} state=latest
+    with_items:
+      - mc
+      - git-core
+      - nano
+      - screen
+      - python-pip
+      - python-dev
+
+  - name: dependencies for glances
+    become: yes
+    pip: name={{ item }}
+    with_items:
+      - bottle
+      - zeroconf
+      - netifaces
+      - pymdstat
+      - statsd
+      - pystache
+      - pysnmp
+      - pika
+      - glances
+
+  - name: dependencies for snap
+    become: yes
+    apt: name={{ item }} state=latest
+    with_items:
+      - git
+      - build-essential
+      - libboost-dev
+      - libboost-system-dev
+      - libboost-program-options-dev
+      - libasound2
+      - libasound2-dev
+      - libvorbis-dev
+      - libflac-dev
+      - alsa-utils
+      - libavahi-client-dev
+      - avahi-daemon
+
+  - name: clone snapcast repo
+    git: repo=https://github.com/badaix/snapcast.git dest=/home/pi/snapcast
+
+  - name: build snapcast
+    command: chdir=/home/pi/snapcast make
+
+  - name: install snapcast client
+    become: yes
+    command: chdir=/home/pi/snapcast make installclient
+
+  - name: install snapcast server
+    become: yes
+    command: chdir=/home/pi/snapcast make installserver
