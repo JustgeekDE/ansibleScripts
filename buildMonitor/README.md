@@ -3,7 +3,7 @@ Provision with
 
 ```sh
 
-ansible-playbook "-e 'GOCD_SERVER_NAME=... GOCD_SERVER_PORT=... GOCD_SSERVER_AUTH=...'" -i hosts basic-setup.yml --ask-pass
+ansible-playbook "-e 'GOCD_SERVER_NAME=... GOCD_SERVER_PORT=... GOCD_SERVER_AUTH=...'" -i hosts basic-setup.yml --ask-pass
 
 ```
 
